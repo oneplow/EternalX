@@ -1,0 +1,21 @@
+# EternalX Configuration
+
+# เปิด-ปิด ข้อความตรวจสอบการทำงาน (Debug Messages)
+# แนะนำให้เปิดตอนกำลังตั้งค่า หรือตอนที่ปลั๊กอินมีปัญหา
+debug-mode: false
+
+# ===== Ore Generation Settings =====
+# เปิด-ปิด ระบบจัดการ Ore Generation
+ores-enabled: true
+
+# อัตราการเกิด Ore แต่ละชนิด (1.0 = ปกติ, 0.5 = ลดลง 50%, 2.0 = เพิ่มขึ้น 2 เท่า)
+# ชื่อจะถูกจับคู่กับ feature name ของ Minecraft (เช่น ore_diamond, ore_iron ฯลฯ)
+ores:
+  diamond_ore: 1.0
+  iron_ore: 1.0
+  gold_ore: 1.0
+  copper_ore: 1.0
+  coal_ore: 1.0
+  lapis_ore: 1.0
+  redstone_ore: 1.0
+  emerald_ore: 1.0
