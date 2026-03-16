@@ -3,16 +3,20 @@ package com.warakorn.eternalx.modules.items;
 import com.warakorn.eternalx.EternalX;
 import com.warakorn.eternalx.modules.items.abilities.Ability;
 import com.warakorn.eternalx.modules.items.abilities.AbilityType;
+import org.bukkit.entity.AreaEffectCloud;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.AreaEffectCloudApplyEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
@@ -41,7 +45,16 @@ public class AbilityListener implements Listener {
   // ==================== ON_HIT ====================
   @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
   public void onEntityHit(EntityDamageByEntityEvent event) {
-    if (!(event.getDamager() instanceof Player player)) return;
+    Player player;
+
+    // ตรวจสอบว่า damager เป็น Player โดยตรง หรือเป็น Projectile ที่ Player ยิง
+    if (event.getDamager() instanceof Player p) {
+      player = p;
+    } else if (event.getDamager() instanceof Projectile proj && proj.getShooter() instanceof Player shooter) {
+      player = shooter;
+    } else {
+      return;
+    }
 
     // ป้องกัน recursive loop: ถ้าผู้เล่นกำลัง process ability อยู่ ข้ามไป
     if (processingPlayers.contains(player.getUniqueId())) return;
@@ -108,6 +121,29 @@ public class AbilityListener implements Listener {
     processArmorAndHands(player, AbilityType.JUMP, event);
   }
 
+  // ==================== FISH (Fishing Rod Hook) ====================
+  @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+  public void onPlayerFish(PlayerFishEvent event) {
+    // ทำงานเมื่อเบ็ดตกถึงจุดหมาย (ไม่ใช่ตอนปล่อยสาย)
+    if (event.getState() != PlayerFishEvent.State.IN_GROUND
+        && event.getState() != PlayerFishEvent.State.REEL_IN
+        && event.getState() != PlayerFishEvent.State.CAUGHT_ENTITY) return;
+
+    Player player = event.getPlayer();
+    ItemStack mainHand = player.getInventory().getItemInMainHand();
+    processAbilities(player, mainHand, AbilityType.FISH, event);
+  }
+
+  // ==================== AREA EFFECT CLOUD PROTECTION ====================
+  @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+  public void onCloudApply(AreaEffectCloudApplyEvent event) {
+    AreaEffectCloud cloud = event.getEntity();
+    if (cloud.getSource() instanceof Player caster) {
+      // ลบผู้สร้างออกจากรายชื่อคนที่จะโดน effect → ไม่โดนควันตัวเอง
+      event.getAffectedEntities().removeIf(entity -> entity.getUniqueId().equals(caster.getUniqueId()));
+    }
+  }
+
   // ==================== PASSIVE TASK ====================
   private void startPassiveAbilityTask() {
     plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
@@ -165,18 +201,38 @@ public class AbilityListener implements Listener {
       // เช็ค Cooldown
       String cooldownKey = itemId + "_" + abilityName;
       if (plugin.getCooldownManager().isOnCooldown(player, cooldownKey)) {
-        if (triggerType == AbilityType.RIGHT_CLICK) {
+        if (triggerType == AbilityType.RIGHT_CLICK || triggerType == AbilityType.SNEAK || triggerType == AbilityType.JUMP) {
           plugin.getCooldownManager().sendCooldownMessage(player, cooldownKey);
         }
         continue;
       }
 
+      // เช็ค Chance (โอกาสทำงาน) - ถ้าไม่ผ่าน ข้ามไปเลย (ไม่แจ้งข้อความ)
+      if (ability.getChance() < 1.0 && Math.random() > ability.getChance()) {
+        continue;
+      }
+
+      // เช็ค Mana
+      if (ability.getManaCost() > 0) {
+        if (!plugin.getManaManager().hasMana(player, ability.getManaCost())) {
+          if (triggerType == AbilityType.RIGHT_CLICK || triggerType == AbilityType.SNEAK || triggerType == AbilityType.JUMP) {
+            plugin.getManaManager().sendNotEnoughManaMessage(player, ability.getManaCost());
+          }
+          continue;
+        }
+      }
+
       // Execute 
       boolean success = ability.execute(player, item, event);
 
-      // ถ้าทำสำเร็จ + มี cooldown → ใส่ cooldown
-      if (success && ability.getCooldownTicks() > 0) {
-        plugin.getCooldownManager().setCooldown(player, cooldownKey, ability.getCooldownTicks());
+      // ถ้าทำสำเร็จ → หัก Mana + ใส่ Cooldown
+      if (success) {
+        if (ability.getManaCost() > 0) {
+          plugin.getManaManager().consumeMana(player, ability.getManaCost());
+        }
+        if (ability.getCooldownTicks() > 0) {
+          plugin.getCooldownManager().setCooldown(player, cooldownKey, ability.getCooldownTicks());
+        }
       }
     }
   }

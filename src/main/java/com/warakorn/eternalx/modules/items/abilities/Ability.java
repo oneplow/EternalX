@@ -15,6 +15,8 @@ public abstract class Ability {
   protected final String id;
   protected final AbilityType type;
   protected final long cooldownTicks; // 20 ticks = 1 second
+  protected final double manaCost;    // ค่า Mana ที่ต้องใช้ (0 = ไม่ใช้ mana)
+  protected final double chance;      // โอกาสทำงาน 0.0-1.0 (1.0 = 100%)
 
   public Ability(EternalX plugin, String id, AbilityType type, Map<String, Object> config) {
     this.plugin = plugin;
@@ -27,6 +29,12 @@ public abstract class Ability {
     } else {
       this.cooldownTicks = 0;
     }
+
+    // โหลด mana-cost
+    this.manaCost = getDoubleConfig(config, "mana-cost", 0);
+
+    // โหลด chance (โอกาสทำงาน, default = 1.0 คือ 100%)
+    this.chance = getDoubleConfig(config, "chance", 1.0);
   }
 
   /**
@@ -48,6 +56,14 @@ public abstract class Ability {
 
   public long getCooldownTicks() {
     return cooldownTicks;
+  }
+
+  public double getManaCost() {
+    return manaCost;
+  }
+
+  public double getChance() {
+    return chance;
   }
 
   /**
@@ -82,3 +98,4 @@ public abstract class Ability {
     return Boolean.parseBoolean(val.toString());
   }
 }
+

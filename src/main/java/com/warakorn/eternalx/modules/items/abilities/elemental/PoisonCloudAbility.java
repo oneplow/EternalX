@@ -40,7 +40,8 @@ public class PoisonCloudAbility extends Ability {
     cloud.setRadius(radius);
     cloud.setDuration(durationTicks);
     cloud.setColor(org.bukkit.Color.GREEN);
-    cloud.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 60, 1), true); // คนโดนติดพิษ 3s
+    cloud.setSource(player); // ระบุผู้สร้าง — AbilityListener จะกรองไม่ให้โดนตัวเอง
+    cloud.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 60, 1), true);
 
     return true;
   }

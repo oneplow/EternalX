@@ -20,7 +20,7 @@ public class LifestealAbility extends Ability {
   
   public LifestealAbility(EternalX plugin, String id, Map<String, Object> config) {
     super(plugin, id, AbilityType.ON_HIT, config);
-    this.percent = getDoubleConfig(config, "percent", 10.0);
+    this.percent = getDoubleConfig(config, "heal_percent", 10.0);
   }
 
   @Override

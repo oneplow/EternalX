@@ -24,6 +24,8 @@ abilities:
   - type: ON_HIT
     ability: LIFESTEAL
     heal_percent: 15.0
+    chance: 0.3
+    mana-cost: 5
     cooldown: 0
 
 craftable: true

@@ -31,6 +31,7 @@ abilities:
   - type: ON_DAMAGE_TAKEN
     ability: DAMAGE_REFLECT
     percent: 20.0
+    mana-cost: 5
     cooldown: 0
   - type: PASSIVE
     ability: ABSORPTION

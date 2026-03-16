@@ -51,23 +51,26 @@ public class StructureManager {
     }
 
     org.bukkit.command.ConsoleCommandSender console = plugin.getServer().getConsoleSender();
-    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
+    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+        .legacySection();
 
     console.sendMessage(legacy.deserialize("§a[EternalX] Loaded §e" + loadedStructures.size() + " §astructures:"));
-    
+
     // แสดงสถิติตาม rarity
     Map<StructureRarity, Long> countByRarity = loadedStructures.stream()
-      .collect(Collectors.groupingBy(StructureData::getRarity, Collectors.counting()));
-    
+        .collect(Collectors.groupingBy(StructureData::getRarity, Collectors.counting()));
+
     for (StructureRarity rarity : StructureRarity.values()) {
       long count = countByRarity.getOrDefault(rarity, 0L);
       if (count > 0) {
-        console.sendMessage(legacy.deserialize("§7[EternalX]   " + rarity.getDisplayName() + "§r: §e" + count + " §7structures"));
+        console.sendMessage(
+            legacy.deserialize("§7[EternalX]   " + rarity.getDisplayName() + "§r: §e" + count + " §7structures"));
       }
     }
 
     // ✅ Feature 4: แสดง memory info
-    console.sendMessage(legacy.deserialize("§7[EternalX] Schematic cache: §e" + schematicCache.getRegisteredCount() + " §7registered"));
+    console.sendMessage(
+        legacy.deserialize("§7[EternalX] Schematic cache: §e" + schematicCache.getRegisteredCount() + " §7registered"));
   }
 
   private void loadStructuresFromRarityFolder(File rarityFolder, StructureRarity rarity, File structuresDir) {
@@ -75,8 +78,7 @@ public class StructureManager {
       return;
     }
 
-    File[] schemFiles = rarityFolder.listFiles((dir, name) -> 
-      name.endsWith(".schem") || name.endsWith(".schematic"));
+    File[] schemFiles = rarityFolder.listFiles((dir, name) -> name.endsWith(".schem") || name.endsWith(".schematic"));
 
     if (schemFiles == null || schemFiles.length == 0) {
       return;
@@ -91,17 +93,18 @@ public class StructureManager {
 
     for (File schemFile : schemFiles) {
       String structureName = schemFile.getName()
-        .replace(".schem", "")
-        .replace(".schematic", "");
-      
+          .replace(".schem", "")
+          .replace(".schematic", "");
+
       // Config file อยู่ใน structures/{rarity}/
       File configFile = new File(rarityConfigFolder, structureName + ".yml");
 
       if (!configFile.exists()) {
         createDefaultConfig(configFile, schemFile.getName(), rarity);
-        plugin.getLogger().info("Generated config: structures/" + rarity.name().toLowerCase() + "/" + structureName + ".yml");
+        plugin.getLogger()
+            .info("Generated config: structures/" + rarity.name().toLowerCase() + "/" + structureName + ".yml");
       }
-      
+
       loadSingleStructure(structureName, configFile, schemFile, rarity);
     }
   }
@@ -114,7 +117,7 @@ public class StructureManager {
       config.set("file", schemFileName);
       config.set("rarity", rarity.name());
       config.set("weight", 1.0);
-      
+
       int spacing = switch (rarity) {
         case COMMON -> 15;
         case UNCOMMON -> 20;
@@ -124,7 +127,7 @@ public class StructureManager {
         case MYTHIC -> 80;
       };
       config.set("spacing", spacing);
-      config.set("offset-y", 1);
+      config.set("offset-y", -1);
 
       // Rotation
       config.set("rotation.mode", "RANDOM");
@@ -160,7 +163,7 @@ public class StructureManager {
   private void loadSingleStructure(String id, File configFile, File schemFile, StructureRarity rarity) {
     try {
       YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-      
+
       if (!schemFile.exists()) {
         plugin.getLogger().warning("Missing schematic: " + schemFile.getAbsolutePath());
         return;
@@ -168,7 +171,8 @@ public class StructureManager {
 
       // ✅ Feature 4: Lazy loading — โหลด clipboard เพื่ออ่าน dimensions แล้วใส่ cache
       Clipboard clipboard = schematicCache.loadAndCache(id, schemFile);
-      if (clipboard == null) return;
+      if (clipboard == null)
+        return;
 
       int width = clipboard.getDimensions().x();
       int height = clipboard.getDimensions().y();
@@ -209,7 +213,7 @@ public class StructureManager {
         if (!angles.isEmpty()) {
           allowedRotations = angles.stream().mapToInt(Integer::intValue).toArray();
         } else {
-          allowedRotations = new int[]{0, 90, 180, 270};
+          allowedRotations = new int[] { 0, 90, 180, 270 };
         }
       }
 
@@ -227,29 +231,31 @@ public class StructureManager {
       boolean strictBiomeCheck = config.getBoolean("biome.strict-check", false);
 
       Set<Biome> allowedBiomes = config.getStringList("biome.allowed").stream()
-        .map(s -> {
-          try {
-            String keyStr = s.toLowerCase(Locale.ROOT);
-            if (!keyStr.contains(":")) keyStr = "minecraft:" + keyStr;
-            return Registry.BIOME.get(NamespacedKey.fromString(keyStr));
-          } catch (Exception e) {
-            return null;
-          }
-        }).filter(Objects::nonNull).collect(Collectors.toSet());
+          .map(s -> {
+            try {
+              String keyStr = s.toLowerCase(Locale.ROOT);
+              if (!keyStr.contains(":"))
+                keyStr = "minecraft:" + keyStr;
+              return Registry.BIOME.get(NamespacedKey.fromString(keyStr));
+            } catch (Exception e) {
+              return null;
+            }
+          }).filter(Objects::nonNull).collect(Collectors.toSet());
 
       Set<Biome> forbiddenBiomes = config.getStringList("biome.forbidden").stream()
-        .map(s -> {
-          try {
-            String keyStr = s.toLowerCase(Locale.ROOT);
-            if (!keyStr.contains(":")) keyStr = "minecraft:" + keyStr;
-            return Registry.BIOME.get(NamespacedKey.fromString(keyStr));
-          } catch (Exception e) {
-            return null;
-          }
-        }).filter(Objects::nonNull).collect(Collectors.toSet());
+          .map(s -> {
+            try {
+              String keyStr = s.toLowerCase(Locale.ROOT);
+              if (!keyStr.contains(":"))
+                keyStr = "minecraft:" + keyStr;
+              return Registry.BIOME.get(NamespacedKey.fromString(keyStr));
+            } catch (Exception e) {
+              return null;
+            }
+          }).filter(Objects::nonNull).collect(Collectors.toSet());
 
       Set<Material> ground = config.getStringList("ground-blocks").stream()
-        .map(Material::matchMaterial).filter(Objects::nonNull).collect(Collectors.toSet());
+          .map(Material::matchMaterial).filter(Objects::nonNull).collect(Collectors.toSet());
 
       // ============ Treasure ============
       String treasureFile = config.getString("treasure-file", null);
@@ -273,20 +279,19 @@ public class StructureManager {
 
       // ============ สร้าง StructureData ============
       loadedStructures.add(new StructureData(
-        id, schematicCache, width, height, length,
-        weight, spacing, offsetY,
-        allowedBiomes, forbiddenBiomes, ground,
-        rotationMode != RotationMode.NONE, pasteAir,
-        placementType, dimensionType,
-        treasureFile, biomeMatchMode, strictBiomeCheck,
-        rotationMode, allowedRotations, enforceHorizontal, enforceVertical,
-        finalRarity, tags, lootTable
-      ));
+          id, schematicCache, width, height, length,
+          weight, spacing, offsetY,
+          allowedBiomes, forbiddenBiomes, ground,
+          rotationMode != RotationMode.NONE, pasteAir,
+          placementType, dimensionType,
+          treasureFile, biomeMatchMode, strictBiomeCheck,
+          rotationMode, allowedRotations, enforceHorizontal, enforceVertical,
+          finalRarity, tags, lootTable));
 
       plugin.debugLog("Loaded: §e" + id + " " + finalRarity.getDisplayName() +
-        " §7[" + placementType + ", " + dimensionType + ", weight=" + 
-        String.format("%.2f", finalRarity.calculateFinalWeight(weight)) + 
-        (tags.isEmpty() ? "" : ", tags=" + tags) + "]");
+          " §7[" + placementType + ", " + dimensionType + ", weight=" +
+          String.format("%.2f", finalRarity.calculateFinalWeight(weight)) +
+          (tags.isEmpty() ? "" : ", tags=" + tags) + "]");
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -299,7 +304,8 @@ public class StructureManager {
 
   public StructureData getStructure(String id) {
     for (StructureData data : loadedStructures) {
-      if (data.getId().equalsIgnoreCase(id)) return data;
+      if (data.getId().equalsIgnoreCase(id))
+        return data;
     }
     return null;
   }

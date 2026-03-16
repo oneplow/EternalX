@@ -10,7 +10,7 @@ lore:
   - "&7A modified fishing rod with a grappling mechanism."
   - ""
   - "&a&lAbility: Grapple"
-  - "&7Right-click to pull yourself to where you look."
+  - "&7Right-click to glide towards where you look!"
   - "&a&lAbility: Blink"
   - "&7Sneak + Right-click to teleport forward."
 
@@ -18,12 +18,14 @@ abilities:
   - type: RIGHT_CLICK
     ability: GRAPPLE
     speed: 1.5
-    max_distance: 30.0
+    max_distance: 30
+    mana-cost: 10
     cooldown: 4000
   - type: RIGHT_CLICK
     ability: BLINK
     distance: 15
     require_sneak: true
+    mana-cost: 20
     cooldown: 8000
 
 craftable: true

@@ -23,11 +23,13 @@ abilities:
   - type: PASSIVE
     ability: DOUBLE_JUMP
     force: 0.8
+    mana-cost: 10
     cooldown: 3000
   - type: ON_KILL
     ability: SPEED_BURST
     duration: 100
     amplifier: 2
+    mana-cost: 3
     cooldown: 0
 
 craftable: false

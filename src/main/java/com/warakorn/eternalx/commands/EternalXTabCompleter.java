@@ -53,7 +53,7 @@ public class EternalXTabCompleter implements TabCompleter {
           .collect(Collectors.toList());
         StringUtil.copyPartialMatches(args[1], structures, completions);
       } else if (sub.equals("item") && sender.hasPermission("eternalx.admin")) {
-        StringUtil.copyPartialMatches(args[1], java.util.Arrays.asList("list", "give", "resetcooldown"), completions);
+        StringUtil.copyPartialMatches(args[1], java.util.Arrays.asList("list", "give", "resetcooldown", "resetmana"), completions);
       }
     } else if (args.length == 3) {
       String sub = args[0].toLowerCase();
@@ -61,7 +61,7 @@ public class EternalXTabCompleter implements TabCompleter {
         // Tab complete rotation angles for preview
         List<String> rotations = List.of("0", "90", "180", "270");
         StringUtil.copyPartialMatches(args[2], rotations, completions);
-      } else if (sub.equals("item") && (args[1].equalsIgnoreCase("give") || args[1].equalsIgnoreCase("resetcooldown")) && sender.hasPermission("eternalx.admin")) {
+      } else if (sub.equals("item") && (args[1].equalsIgnoreCase("give") || args[1].equalsIgnoreCase("resetcooldown") || args[1].equalsIgnoreCase("resetmana")) && sender.hasPermission("eternalx.admin")) {
         List<String> players = new ArrayList<>();
         for (org.bukkit.entity.Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
           players.add(p.getName());

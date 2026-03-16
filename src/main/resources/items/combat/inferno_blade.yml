@@ -27,11 +27,14 @@ abilities:
   - type: ON_HIT
     ability: IGNITE
     duration: 60
+    chance: 0.4
+    mana-cost: 3
     cooldown: 0
   - type: RIGHT_CLICK
     ability: SWEEPING_WAVE
     damage: 6.0
     range: 5.0
+    mana-cost: 20
     cooldown: 8000
 
 craftable: false

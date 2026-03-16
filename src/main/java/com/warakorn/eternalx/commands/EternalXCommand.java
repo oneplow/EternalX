@@ -113,8 +113,23 @@ public class EternalXCommand implements CommandExecutor {
         }
         return true;
       }
+      if (action.equals("resetmana") && args.length >= 3) {
+        Player target = org.bukkit.Bukkit.getPlayer(args[2]);
+        if (target == null) {
+          sender.sendMessage(Component.text("Player not found.", NamedTextColor.RED));
+          return true;
+        }
+
+        if (plugin.getManaManager() != null) {
+          plugin.getManaManager().resetMana(target);
+          sender.sendMessage(Component.text("Reset mana for " + target.getName() + " to full.", NamedTextColor.GREEN));
+        } else {
+          sender.sendMessage(Component.text("Mana Manager is not initialized!", NamedTextColor.RED));
+        }
+        return true;
+      }
       
-      sender.sendMessage(Component.text("Usage: /eternalx item <list|give|resetcooldown> [arguments...]", NamedTextColor.RED));
+      sender.sendMessage(Component.text("Usage: /eternalx item <list|give|resetcooldown|resetmana> [arguments...]", NamedTextColor.RED));
       return true;
     }
 

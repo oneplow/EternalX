@@ -19,3 +19,13 @@ ores:
   lapis_ore: 1.0
   redstone_ore: 1.0
   emerald_ore: 1.0
+
+# ===== Mana System Settings =====
+# ระบบ Mana สำหรับ Ability ของไอเท็ม
+mana:
+  # ค่า Mana สูงสุดของผู้เล่น
+  max-mana: 100.0
+  # Mana ที่ฟื้นฟูต่อวินาที
+  regen-per-second: 2.0
+  # ความถี่ในการอัปเดต Mana (หน่วย tick, 20 = ทุก 1 วินาที)
+  regen-interval-ticks: 20

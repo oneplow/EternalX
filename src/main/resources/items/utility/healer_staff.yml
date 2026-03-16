@@ -19,11 +19,13 @@ abilities:
     ability: HEAL_AURA
     radius: 8.0
     heal_amount: 10.0
+    mana-cost: 30
     cooldown: 15000
   - type: RIGHT_CLICK
     ability: LIGHT_ORB
     duration: 200
     require_sneak: true
+    mana-cost: 10
     cooldown: 5000
 
 craftable: true

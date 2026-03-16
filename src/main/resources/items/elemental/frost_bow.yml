@@ -24,12 +24,14 @@ abilities:
     ability: FREEZE
     duration: 80
     amplifier: 1
+    chance: 0.4
     cooldown: 0
   - type: RIGHT_CLICK
     ability: POISON_CLOUD
     radius: 4.0
     duration: 100
     damage: 2.0
+    mana-cost: 20
     cooldown: 20000
 
 craftable: false

@@ -10,5 +10,6 @@ public enum AbilityType {
   ON_KILL,          // ทำงานเมื่อฆ่าศัตรูตาย
   ON_DAMAGE_TAKEN,  // ทำงานเมื่อได้รับความเสียหาย
   SNEAK,            // ทำงานเมื่อกด Shift (Sneak)
-  JUMP              // ทำงานเมื่อกระโดด
+  JUMP,             // ทำงานเมื่อกระโดด
+  FISH              // ทำงานเมื่อสายเบ็ดถึงจุดหมาย (Fishing Rod)
 }

@@ -38,11 +38,11 @@ public class CooldownManager {
 
   /**
    * Set Cooldown ให้ผู้เล่น เริ่มนับถอยหลัง
+   * @param millis ระยะเวลา cooldown เป็นมิลลิวินาที (เช่น 3000 = 3 วินาที)
    */
-  public void setCooldown(Player player, String abilityId, long ticks) {
-    if (ticks <= 0) return;
+  public void setCooldown(Player player, String abilityId, long millis) {
+    if (millis <= 0) return;
 
-    long millis = ticks * 50L; // 1 tick = 50ms
     long nextAvailable = System.currentTimeMillis() + millis;
 
     cooldowns.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>())

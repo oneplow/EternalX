@@ -30,16 +30,20 @@ attributes:
 abilities:
   - type: RIGHT_CLICK
     ability: LIGHTNING
+    mana-cost: 30
     cooldown: 10000
   - type: ON_HIT
     ability: CHAIN_LIGHTNING
     targets: 3
     damage: 6.0
     radius: 6.0
+    chance: 0.35
+    mana-cost: 10
     cooldown: 5000
   - type: ON_HIT
     ability: IGNITE
     duration: 100
+    chance: 0.3
     cooldown: 0
 
 craftable: false

@@ -18,6 +18,7 @@ abilities:
     ability: DASH
     force: 1.5
     damage: 5.0
+    mana-cost: 15
     cooldown: 3000
   - type: PASSIVE
     ability: SATURATION

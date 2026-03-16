@@ -26,11 +26,14 @@ abilities:
     ability: WITHER_TOUCH
     duration: 100
     amplifier: 1
+    chance: 0.35
     cooldown: 0
   - type: ON_HIT
     ability: BLEED
     damage_per_tick: 1.0
     duration: 60
+    chance: 0.3
+    mana-cost: 5
     cooldown: 5000
 
 craftable: false

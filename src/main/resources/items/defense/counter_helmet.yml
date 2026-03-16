@@ -26,6 +26,7 @@ abilities:
     ability: COUNTER_STRIKE
     chance: 20.0
     reflect_multiplier: 1.0
+    mana-cost: 5
     cooldown: 3000
   - type: PASSIVE
     ability: NIGHT_VISION

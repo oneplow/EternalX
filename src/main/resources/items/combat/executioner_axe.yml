@@ -29,15 +29,18 @@ abilities:
     ability: EXECUTE
     threshold: 30.0
     multiplier: 2.0
+    chance: 0.5
     cooldown: 0
   - type: ON_HIT
     ability: BACKSTAB
     multiplier: 2.5
+    chance: 0.5
     cooldown: 0
   - type: ON_KILL
     ability: SPEED_BURST
     duration: 100
     amplifier: 2
+    mana-cost: 3
     cooldown: 0
 
 craftable: false

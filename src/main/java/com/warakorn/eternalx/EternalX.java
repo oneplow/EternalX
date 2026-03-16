@@ -14,6 +14,7 @@ import com.warakorn.eternalx.modules.items.CustomItemManager;
 import com.warakorn.eternalx.modules.items.AbilityListener;
 import com.warakorn.eternalx.modules.items.abilities.AbilityRegistry;
 import com.warakorn.eternalx.modules.items.abilities.CooldownManager;
+import com.warakorn.eternalx.modules.items.abilities.ManaManager;
 import com.warakorn.eternalx.modules.items.crafting.CraftingManager;
 import com.warakorn.eternalx.settings.SettingsManager;
 import com.warakorn.eternalx.settings.ValidWorldsManager;
@@ -32,6 +33,7 @@ public class EternalX extends JavaPlugin {
   private CustomItemManager customItemManager;
   private AbilityRegistry abilityRegistry;
   private CooldownManager cooldownManager;
+  private ManaManager manaManager;
   private CraftingManager craftingManager;
   private com.warakorn.eternalx.modules.items.loot.CustomDropManager customDropManager;
 
@@ -68,6 +70,7 @@ public class EternalX extends JavaPlugin {
     this.customItemManager = new CustomItemManager(this);
     this.abilityRegistry = new AbilityRegistry(this);
     this.cooldownManager = new CooldownManager(this);
+    this.manaManager = new ManaManager(this);
     this.craftingManager = new CraftingManager(this);
     this.customDropManager = new com.warakorn.eternalx.modules.items.loot.CustomDropManager(this);
     
@@ -169,6 +172,10 @@ public class EternalX extends JavaPlugin {
 
   public CooldownManager getCooldownManager() {
     return cooldownManager;
+  }
+
+  public ManaManager getManaManager() {
+    return manaManager;
   }
 
   public CraftingManager getCraftingManager() {

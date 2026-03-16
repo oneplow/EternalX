@@ -18,6 +18,7 @@ abilities:
     duration: 100
     width: 3
     height: 3
+    mana-cost: 25
     cooldown: 15000
 
 craftable: false
