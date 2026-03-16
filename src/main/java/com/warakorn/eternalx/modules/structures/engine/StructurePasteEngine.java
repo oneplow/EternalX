@@ -45,8 +45,8 @@ public class StructurePasteEngine {
 
   private static void pasteWorldEdit(EternalX plugin, StructureData data, Location loc, int rotationDegree) {
     try (EditSession session = WorldEdit.getInstance().newEditSessionBuilder()
-      .world(BukkitAdapter.adapt(loc.getWorld()))
-      .build()) {
+        .world(BukkitAdapter.adapt(loc.getWorld()))
+        .build()) {
 
       Clipboard clipboard = data.getClipboard();
       ClipboardHolder holder = new ClipboardHolder(clipboard);
@@ -56,20 +56,27 @@ public class StructurePasteEngine {
       BlockVector3 to = BlockVector3.at(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
 
       Mask barrierMask = new BlockTypeMask(clipboard,
-        BlockTypes.BARRIER,
-        BlockTypes.STRUCTURE_VOID,
-        BlockTypes.BEDROCK
-      );
+          BlockTypes.BARRIER,
+          BlockTypes.STRUCTURE_VOID,
+          BlockTypes.BEDROCK);
       Mask inverseMask = Masks.negate(barrierMask);
 
       Operation operation = holder.createPaste(session)
-        .to(to)
-        .ignoreAirBlocks(!data.isPasteAir())
-        .maskSource(inverseMask)
-        .copyEntities(true)
-        .build();
+          .to(to)
+          .ignoreAirBlocks(!data.isPasteAir())
+          .maskSource(inverseMask)
+          .copyEntities(true)
+          .build();
 
       Operations.complete(operation);
+
+      // ===== Second Pass: วางบล็อกที่ต้องพึ่ง support (ไฟ, คบเพลิง, ปุ่ม ฯลฯ) =====
+      // เหตุผล: WorldEdit วางทุกบล็อกพร้อมกัน แต่ Minecraft physics จะลบบล็อกที่
+      // ไม่มีตัวรองรับ (เช่น ไฟ, คบเพลิง, lantern) ออกทันที
+      // วิธีแก้: รอ 5 tick แล้ววางบล็อกเหล่านี้ใหม่โดยปิด physics
+      Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        replaceAttachableBlocks(clipboard, transform, loc);
+      }, 5L);
 
       List<ProcessingTask> tasks = analyzeClipboard(clipboard, transform, loc);
 
@@ -82,7 +89,78 @@ public class StructurePasteEngine {
     }
   }
 
-  private static List<ProcessingTask> analyzeClipboard(Clipboard clipboard, AffineTransform transform, Location pasteCenter) {
+  /**
+   * รอบสอง: วางบล็อกที่ต้องพึ่ง support ใหม่ (ไฟ, คบเพลิง, lantern, ปุ่ม, ฯลฯ)
+   * ใช้ Bukkit API วางโดยปิด physics เพื่อไม่ให้ pop off
+   */
+  private static void replaceAttachableBlocks(Clipboard clipboard, AffineTransform transform, Location pasteCenter) {
+    BlockVector3 origin = clipboard.getOrigin();
+    World world = pasteCenter.getWorld();
+
+    for (BlockVector3 vec : clipboard.getRegion()) {
+      BaseBlock baseBlock = clipboard.getFullBlock(vec);
+      String blockId = baseBlock.getBlockType().id();
+
+      // เช็คว่าเป็นบล็อกที่ต้องมี support หรือไม่
+      if (!isAttachableBlock(blockId))
+        continue;
+
+      // ข้าม air
+      if (baseBlock.getBlockType() == BlockTypes.AIR)
+        continue;
+
+      Location worldLoc = calculateWorldLoc(vec, origin, transform, pasteCenter);
+      Block block = world.getBlockAt(worldLoc);
+
+      // เช็คว่าบล็อกปัจจุบันตรงนี้ถูกลบไปหรือเปล่า (กลายเป็น air)
+      // ถ้ายังอยู่แล้วก็ไม่ต้องทำอะไร
+      if (block.getType() != Material.AIR && block.getType() != Material.CAVE_AIR)
+        continue;
+
+      // แปลง WorldEdit BlockData → Bukkit BlockData แล้ววางโดยปิด physics
+      try {
+        org.bukkit.block.data.BlockData bukkitData = BukkitAdapter.adapt(baseBlock);
+        block.setBlockData(bukkitData, false); // false = ปิด physics → ไม่ pop off
+      } catch (Exception ignored) {
+        // ข้ามบล็อกที่แปลง BlockData ไม่ได้
+      }
+    }
+  }
+
+  /**
+   * เช็คว่าบล็อกนี้เป็นประเภทที่ต้องพึ่ง support block หรือไม่
+   * เช่น ไฟ, คบเพลิง, lantern, ปุ่ม, lever, เทียน, แผ่นกด ฯลฯ
+   */
+  private static boolean isAttachableBlock(String blockId) {
+    return blockId.contains("fire")
+        || blockId.contains("torch")
+        || blockId.contains("lantern")
+        || blockId.contains("button")
+        || blockId.contains("lever")
+        || blockId.contains("candle")
+        || blockId.contains("pressure_plate")
+        || blockId.contains("banner")
+        || blockId.contains("sign")
+        || blockId.contains("flower_pot")
+        || blockId.contains("tripwire")
+        || blockId.contains("rail")
+        || blockId.contains("redstone_wire")
+        || blockId.contains("repeater")
+        || blockId.contains("comparator")
+        || blockId.contains("carpet")
+        || blockId.contains("snow_layer")
+        || blockId.contains("vine")
+        || blockId.contains("ladder")
+        || blockId.contains("bell")
+        || blockId.contains("chain")
+        || blockId.contains("cobweb")
+        || blockId.contains("hanging")
+        || blockId.contains("painting")
+        || blockId.contains("item_frame");
+  }
+
+  private static List<ProcessingTask> analyzeClipboard(Clipboard clipboard, AffineTransform transform,
+      Location pasteCenter) {
     List<ProcessingTask> tasks = new ArrayList<>();
     BlockVector3 origin = clipboard.getOrigin();
 
@@ -107,18 +185,21 @@ public class StructurePasteEngine {
     return tasks;
   }
 
-  private static Location calculateWorldLoc(BlockVector3 schematicPos, BlockVector3 origin, AffineTransform transform, Location pasteCenter) {
+  private static Location calculateWorldLoc(BlockVector3 schematicPos, BlockVector3 origin, AffineTransform transform,
+      Location pasteCenter) {
     BlockVector3 relative = schematicPos.subtract(origin);
     com.sk89q.worldedit.math.Vector3 rotated = transform.apply(relative.toVector3());
     return pasteCenter.clone().add(rotated.x(), rotated.y(), rotated.z());
   }
 
-  private static void processTasks(EternalX plugin, List<ProcessingTask> tasks, StructureData data, Location centerLoc) {
+  private static void processTasks(EternalX plugin, List<ProcessingTask> tasks, StructureData data,
+      Location centerLoc) {
     World world = centerLoc.getWorld();
 
     // ✅ Fix #4: ตรวจสอบ valid ground ก่อน build foundation
     if (!data.getValidGround().isEmpty()) {
-      Material groundMat = world.getBlockAt(centerLoc.getBlockX(), centerLoc.getBlockY() - 1, centerLoc.getBlockZ()).getType();
+      Material groundMat = world.getBlockAt(centerLoc.getBlockX(), centerLoc.getBlockY() - 1, centerLoc.getBlockZ())
+          .getType();
       if (!data.getValidGround().contains(groundMat)) {
         plugin.debugLog("Skipped foundation: invalid ground " + groundMat + " for " + data.getId());
       }
@@ -126,9 +207,9 @@ public class StructurePasteEngine {
 
     int halfWidth = Math.max(data.getWidth(), data.getLength()) / 2 + 2;
     buildFoundation(world,
-      centerLoc.getBlockX() - halfWidth, centerLoc.getBlockX() + halfWidth,
-      centerLoc.getBlockZ() - halfWidth, centerLoc.getBlockZ() + halfWidth,
-      centerLoc.getBlockY());
+        centerLoc.getBlockX() - halfWidth, centerLoc.getBlockX() + halfWidth,
+        centerLoc.getBlockZ() - halfWidth, centerLoc.getBlockZ() + halfWidth,
+        centerLoc.getBlockY());
 
     List<ChestData> chestDataList = new ArrayList<>();
     List<SignData> signDataList = new ArrayList<>();
@@ -157,7 +238,8 @@ public class StructurePasteEngine {
           boolean found = false;
 
           for (Side side : Side.values()) {
-            if (found) break;
+            if (found)
+              break;
             String[] lines = sign.getSide(side).getLines();
             for (String line : lines) {
               String cleanLine = ChatColor.stripColor(line).toLowerCase().replaceAll("\\s+", "");
@@ -165,7 +247,8 @@ public class StructurePasteEngine {
                 String mobName = null;
                 for (String l : lines) {
                   String cleanL = ChatColor.stripColor(l).trim();
-                  if (cleanL.toLowerCase().replaceAll("\\s+", "").contains("[spawn]")) continue;
+                  if (cleanL.toLowerCase().replaceAll("\\s+", "").contains("[spawn]"))
+                    continue;
                   if (!cleanL.isEmpty()) {
                     mobName = cleanL;
                     break;
@@ -218,22 +301,22 @@ public class StructurePasteEngine {
       }
 
       if (treasure != null) {
-        long treasureSeed = world.getSeed() + 
-          centerLoc.getBlockX() * 7919L + 
-          centerLoc.getBlockZ() * 3137L +
-          data.getRarity().ordinal() * 11111L;
-        
+        long treasureSeed = world.getSeed() +
+            centerLoc.getBlockX() * 7919L +
+            centerLoc.getBlockZ() * 3137L +
+            data.getRarity().ordinal() * 11111L;
+
         Random random = new Random(treasureSeed);
-        
+
         for (ChestData chestData : chestDataList) {
           fillChest(chestData.location, treasure, random, data.getRarity().getTreasureMultiplier());
         }
-        
-        plugin.debugLog("Filled " + chestDataList.size() + " containers with treasure: " + 
-          treasureFileName + " (multiplier: " + data.getRarity().getTreasureMultiplier() + "x)");
+
+        plugin.debugLog("Filled " + chestDataList.size() + " containers with treasure: " +
+            treasureFileName + " (multiplier: " + data.getRarity().getTreasureMultiplier() + "x)");
       } else {
-        plugin.getLogger().warning("No treasure found for structure " + data.getId() + 
-          " (tried: loot-table, tags" + data.getTags() + ", rarity)");
+        plugin.getLogger().warning("No treasure found for structure " + data.getId() +
+            " (tried: loot-table, tags" + data.getTags() + ", rarity)");
       }
     }
   }
@@ -281,7 +364,8 @@ public class StructurePasteEngine {
   private static void fillChest(Location location, TreasureData treasure, Random random, double multiplier) {
     Block block = location.getBlock();
     BlockState state = block.getState();
-    if (!(state instanceof Container)) return;
+    if (!(state instanceof Container))
+      return;
 
     Container container = (Container) state;
     Inventory inventory = container.getInventory();
@@ -289,12 +373,14 @@ public class StructurePasteEngine {
 
     // ⭐ Generate loot โดยส่ง multiplier เข้าไป
     List<ItemStack> loot = treasure.generateLoot(random, multiplier);
-    
+
     List<Integer> slots = new ArrayList<>();
-    for (int i = 0; i < inventory.getSize(); i++) slots.add(i);
+    for (int i = 0; i < inventory.getSize(); i++)
+      slots.add(i);
 
     for (ItemStack item : loot) {
-      if (slots.isEmpty()) break;
+      if (slots.isEmpty())
+        break;
       int randomIndex = random.nextInt(slots.size());
       int slot = slots.remove(randomIndex);
       inventory.setItem(slot, item);
@@ -304,7 +390,9 @@ public class StructurePasteEngine {
   private static void createSpawner(Location location, String mobName) {
     try {
       String cleanName = ChatColor.stripColor(mobName).toUpperCase().trim().replace(" ", "_");
-      EntityType type = EntityType.valueOf(cleanName);
+
+      // แปลงชื่ออาชีพ Villager → EntityType.VILLAGER
+      EntityType type = resolveEntityType(cleanName);
 
       Block block = location.getBlock();
       block.setType(Material.SPAWNER, true);
@@ -312,13 +400,36 @@ public class StructurePasteEngine {
       BlockState state = block.getState();
       if (state instanceof org.bukkit.block.CreatureSpawner spawner) {
         spawner.setSpawnedType(type);
-        spawner.setDelay(200);
+        spawner.setMaxNearbyEntities(4);
+        spawner.setRequiredPlayerRange(12);
+        spawner.setSpawnRange(3);
         spawner.update(true);
       }
     } catch (IllegalArgumentException e) {
       location.getBlock().setType(Material.AIR);
       Bukkit.getLogger().warning("[EternalX] Invalid mob name on sign: " + mobName);
     }
+  }
+
+  /**
+   * แปลงชื่อบน sign → EntityType
+   * รองรับชื่ออาชีพ Villager (Unemployed, Farmer, Librarian ฯลฯ) → VILLAGER
+   */
+  private static EntityType resolveEntityType(String name) {
+    // ลอง EntityType ตรงๆ ก่อน
+    try {
+      return EntityType.valueOf(name);
+    } catch (IllegalArgumentException ignored) {}
+
+    // Fallback: ชื่ออาชีพ Villager
+    return switch (name) {
+      case "UNEMPLOYED", "FARMER", "LIBRARIAN", "PRIEST", "CLERIC",
+           "BLACKSMITH", "ARMORER", "WEAPONSMITH", "TOOLSMITH",
+           "BUTCHER", "FISHERMAN", "SHEPHERD", "FLETCHER",
+           "CARTOGRAPHER", "LEATHERWORKER", "MASON", "NITWIT" -> EntityType.VILLAGER;
+      case "GUARD", "SOLDIER" -> EntityType.IRON_GOLEM;
+      default -> throw new IllegalArgumentException("Unknown mob: " + name);
+    };
   }
 
   // ✅ Fix #3: ใช้ deterministic logic แทน Math.random()
@@ -329,7 +440,8 @@ public class StructurePasteEngine {
         if (!floor.getType().isAir() && !floor.getType().name().contains("GLASS")) {
           for (int y = floorY - 1; y >= floorY - 10; y--) {
             Block target = world.getBlockAt(x, y, z);
-            if (target.getType().isSolid()) break;
+            if (target.getType().isSolid())
+              break;
             // Deterministic: ใช้ coordinate แทน Math.random()
             target.setType(((x + y + z) & 1) == 0 ? Material.COBBLESTONE : Material.STONE);
           }
