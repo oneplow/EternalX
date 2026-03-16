@@ -1,13 +1,15 @@
 package com.warakorn.eternalx.listeners;
 
 import com.warakorn.eternalx.EternalX;
+import com.warakorn.eternalx.modules.structures.ExclusionZoneManager;
 import com.warakorn.eternalx.modules.structures.StructureData;
 import com.warakorn.eternalx.modules.structures.engine.StructurePasteEngine;
 import com.warakorn.eternalx.modules.structures.engine.StructurePlacementEngine;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -27,7 +29,7 @@ import java.util.stream.Collectors;
 public class NewChunkLoadEvent implements Listener {
   private final EternalX plugin;
 
-  // ✅ Fix #5: Cache grouped structures per world เพื่อไม่ต้อง recompute ทุก chunk load
+  // ✅ Fix #5: Cache grouped structures per world
   private final Map<String, Map<Integer, List<StructureData>>> worldStructureCache = new ConcurrentHashMap<>();
   private int lastKnownStructureCount = -1;
 
@@ -42,7 +44,6 @@ public class NewChunkLoadEvent implements Listener {
     Chunk chunk = event.getChunk();
     World world = chunk.getWorld();
 
-    // เช็ค Valid Worlds
     if (!plugin.getValidWorldsManager().isValidWorld(world)) {
       return;
     }
@@ -71,12 +72,23 @@ public class NewChunkLoadEvent implements Listener {
 
       if (StructurePlacementEngine.shouldSpawnInChunk(seed, chunk.getX(), chunk.getZ(), groupSeedId, spacing)) {
 
+        // ✅ Feature 1: เช็ค Exclusion Zone
+        ExclusionZoneManager exclusionManager = plugin.getExclusionZoneManager();
+        StructureData tempSelected = candidates.get(0); // ใช้ตัวแรกคำนวณ radius
+        int exclusionRadius = ExclusionZoneManager.calculateRadius(tempSelected);
+        
+        if (exclusionManager.isOccupied(world.getName(), chunk.getX(), chunk.getZ(), exclusionRadius)) {
+          plugin.debugLog("Skipped chunk (" + chunk.getX() + "," + chunk.getZ() + "): exclusion zone");
+          continue;
+        }
+
         Random rand = new Random(seed + chunk.getX() * 99999L + chunk.getZ() * 11111L);
 
-        // ⭐ ใช้ getFinalWeight() แทน getWeight() เพื่อรวม rarity
         StructureData selected = selectWeightedStructure(candidates, rand);
-
         if (selected == null) continue;
+
+        // ✅ Feature 1: อัพเดท radius ตาม structure ที่ถูกเลือกจริง
+        int finalRadius = ExclusionZoneManager.calculateRadius(selected);
 
         int rotation = selected.getRotation(rand);
 
@@ -86,6 +98,9 @@ public class NewChunkLoadEvent implements Listener {
         if (!checkBiome(selected, loc, world)) {
           continue;
         }
+
+        // ✅ Feature 1: Mark exclusion zone
+        exclusionManager.markOccupied(world.getName(), chunk.getX(), chunk.getZ(), finalRadius);
 
         int finalRotation = rotation;
 
@@ -130,19 +145,16 @@ public class NewChunkLoadEvent implements Listener {
     return (validSamples * 1.0 / samplesNeeded) >= 0.7;
   }
 
-  /**
-   * ⭐ Weighted random ที่ใช้ getFinalWeight() (รวม rarity)
-   */
   private StructureData selectWeightedStructure(List<StructureData> list, Random rand) {
     double totalWeight = 0.0;
     for (StructureData data : list) {
-      totalWeight += data.getFinalWeight(); // ⭐ ใช้ finalWeight
+      totalWeight += data.getFinalWeight();
     }
     if (totalWeight <= 0) return list.get(0);
 
     double value = rand.nextDouble() * totalWeight;
     for (StructureData data : list) {
-      value -= data.getFinalWeight(); // ⭐ ใช้ finalWeight
+      value -= data.getFinalWeight();
       if (value <= 0) {
         return data;
       }
@@ -151,51 +163,64 @@ public class NewChunkLoadEvent implements Listener {
   }
 
   /**
-   * ⭐ Debug notification ที่แสดง rarity
+   * ✅ Feature 5: Adventure API debug notification
    */
   private void sendDebugNotification(StructureData data, Location loc, String worldName, int rotation) {
     int x = loc.getBlockX();
     int y = loc.getBlockY();
     int z = loc.getBlockZ();
 
-    TextComponent prefix = new TextComponent("§8[§6EternalX§8] §7Structure spawned!");
+    Component message = Component.text()
+      .append(Component.text("[", NamedTextColor.DARK_GRAY))
+      .append(Component.text("EternalX", NamedTextColor.GOLD))
+      .append(Component.text("] ", NamedTextColor.DARK_GRAY))
+      .append(Component.text("Structure spawned!", NamedTextColor.GRAY))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Rarity: ", NamedTextColor.WHITE))
+      .append(Component.text(data.getRarity().name(), data.getRarity().getAdventureColor()))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Name: ", NamedTextColor.WHITE))
+      .append(Component.text(data.getId(), NamedTextColor.GOLD))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Location: ", NamedTextColor.WHITE))
+      .append(Component.text("[" + x + ", " + y + ", " + z + "]", NamedTextColor.GREEN)
+        .clickEvent(ClickEvent.runCommand("/tp " + x + " " + y + " " + z))
+        .hoverEvent(HoverEvent.showText(
+          Component.text("Click to teleport!", NamedTextColor.GREEN)
+            .append(Component.newline())
+            .append(Component.text("/tp " + x + " " + y + " " + z, NamedTextColor.GRAY))
+        )))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("World: ", NamedTextColor.WHITE))
+      .append(Component.text(worldName, NamedTextColor.AQUA))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Type: ", NamedTextColor.WHITE))
+      .append(Component.text(data.getPlacementType().name(), NamedTextColor.LIGHT_PURPLE))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Rotation: ", NamedTextColor.WHITE))
+      .append(Component.text(rotation + "°", NamedTextColor.YELLOW))
+      .append(Component.newline())
+      .append(Component.text("▪ ", NamedTextColor.YELLOW))
+      .append(Component.text("Weight: ", NamedTextColor.WHITE))
+      .append(Component.text(String.format("%.2f", data.getFinalWeight()), NamedTextColor.GRAY))
+      .build();
 
-    TextComponent rarityText = new TextComponent("\n§e▪ §fRarity: " + data.getRarity().getDisplayName());
-    TextComponent structureText = new TextComponent("\n§e▪ §fName: §6" + data.getId());
-
-    TextComponent coordsLabel = new TextComponent("\n§e▪ §fLocation: ");
-    TextComponent coordsClickable = new TextComponent("§a[" + x + ", " + y + ", " + z + "]");
-    coordsClickable.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tp " + x + " " + y + " " + z));
-    coordsClickable.setHoverEvent(new HoverEvent(
-      HoverEvent.Action.SHOW_TEXT,
-      new ComponentBuilder("§aClick to teleport!\n§7/tp " + x + " " + y + " " + z).create()
-    ));
-
-    TextComponent worldText = new TextComponent("\n§e▪ §fWorld: §b" + worldName);
-    TextComponent typeText = new TextComponent("\n§e▪ §fType: §d" + data.getPlacementType());
-    TextComponent dimensionText = new TextComponent("\n§e▪ §fDimension: §c" + data.getDimensionType());
-    TextComponent rotationText = new TextComponent("\n§e▪ §fRotation: §e" + rotation + "°");
-    TextComponent weightText = new TextComponent(String.format("\n§e▪ §fSpawn Weight: §7%.2f", data.getFinalWeight()));
-
-    TextComponent fullMessage = new TextComponent(prefix);
-    fullMessage.addExtra(rarityText);
-    fullMessage.addExtra(structureText);
-    fullMessage.addExtra(coordsLabel);
-    fullMessage.addExtra(coordsClickable);
-    fullMessage.addExtra(worldText);
-    fullMessage.addExtra(typeText);
-    fullMessage.addExtra(dimensionText);
-    fullMessage.addExtra(rotationText);
-    fullMessage.addExtra(weightText);
-
+    // Console log
     Bukkit.getConsoleSender().sendMessage("§8[§6EternalX§8] " + data.getRarity().getDisplayName() + 
       " §7structure: §6" + data.getId() +
       " §7at §a[" + x + ", " + y + ", " + z + "] " +
-      "§7in §b" + worldName + " §8(" + data.getPlacementType() + ", " + data.getDimensionType() + ", " + rotation + "°)");
+      "§7in §b" + worldName + " §8(" + data.getPlacementType() + ", " + rotation + "°)");
 
+    // ✅ Feature 5: Adventure API
     for (Player player : Bukkit.getOnlinePlayers()) {
       if (player.hasPermission("eternalx.debug")) {
-        player.spigot().sendMessage(fullMessage);
+        player.sendMessage(message);
       }
     }
   }

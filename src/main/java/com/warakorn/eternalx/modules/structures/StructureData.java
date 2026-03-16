@@ -5,12 +5,13 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 
+import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
 
 public class StructureData {
   private final String id;
-  private final Clipboard clipboard;
+  private final SchematicCache schematicCache; // ✅ Feature 4: Lazy loading
   private final double weight;
   private final int spacing;
   private final int offsetY;
@@ -35,18 +36,32 @@ public class StructureData {
   private final boolean enforceHorizontal;
   private final boolean enforceVertical;
 
-  // ⭐ ใหม่: Rarity System
+  // Rarity System
   private final StructureRarity rarity;
 
-  public StructureData(String id, Clipboard clipboard, double weight, int spacing, int offsetY,
+  // ✅ Feature 4: เก็บ dimensions ไว้ไม่ต้องโหลด clipboard ทุกครั้ง
+  private final int width;
+  private final int height;
+  private final int length;
+
+  // ✅ Feature 2: Tag-based loot
+  private final Set<String> tags;
+  private final String lootTable;
+
+  public StructureData(String id, SchematicCache schematicCache, int width, int height, int length,
+                       double weight, int spacing, int offsetY,
                        Set<Biome> allowedBiomes, Set<Biome> forbiddenBiomes, Set<Material> validGround,
                        boolean randomRotation, boolean pasteAir,
                        PlacementType placementType, DimensionType dimensionType,
-                       String treasureFile, BiomeMatchMode biomeMatchMode, boolean strictBiomeCheck, 
+                       String treasureFile, BiomeMatchMode biomeMatchMode, boolean strictBiomeCheck,
                        RotationMode rotationMode, int[] allowedRotations,
-                       boolean enforceHorizontal, boolean enforceVertical, StructureRarity rarity) {
+                       boolean enforceHorizontal, boolean enforceVertical, StructureRarity rarity,
+                       Set<String> tags, String lootTable) {
     this.id = id;
-    this.clipboard = clipboard;
+    this.schematicCache = schematicCache;
+    this.width = width;
+    this.height = height;
+    this.length = length;
     this.weight = weight;
     this.spacing = spacing;
     this.offsetY = offsetY;
@@ -65,6 +80,8 @@ public class StructureData {
     this.enforceHorizontal = enforceHorizontal;
     this.enforceVertical = enforceVertical;
     this.rarity = rarity != null ? rarity : StructureRarity.COMMON;
+    this.tags = tags != null ? tags : Collections.emptySet();
+    this.lootTable = lootTable;
   }
 
   // คำนวณมุมหมุนตาม mode
@@ -84,21 +101,28 @@ public class StructureData {
   }
 
   /**
-   * ⭐ คำนวณ spawn weight ที่รวม rarity แล้ว
+   * คำนวณ spawn weight ที่รวม rarity แล้ว
    */
   public double getFinalWeight() {
     return rarity.calculateFinalWeight(weight);
   }
 
   /**
-   * ⭐ ดึงชื่อ treasure file ที่เหมาะสมกับ rarity
-   * ถ้าไม่มีกำหนดเอง จะใช้ชื่อจาก rarity
+   * ✅ Feature 2: ดึง loot table ตามลำดับ:
+   * 1. Per-structure loot-table (ถ้ากำหนดไว้)
+   * 2. Tag-based (ให้ caller เช็คเอง)
+   * 3. Rarity-based (fallback)
    */
   public String getEffectiveTreasureFile() {
+    // 1. Per-structure loot override
+    if (lootTable != null && !lootTable.isEmpty()) {
+      return lootTable;
+    }
+    // 2. ถ้ามี treasureFile จาก config เดิม
     if (treasureFile != null && !treasureFile.isEmpty()) {
       return treasureFile;
     }
-    // ใช้ชื่อจาก rarity เป็น default
+    // 3. Rarity fallback
     return rarity.getSuggestedTreasureTier() + "_loot";
   }
 
@@ -159,8 +183,11 @@ public class StructureData {
     return id;
   }
 
+  /**
+   * ✅ Feature 4: Lazy-load clipboard จาก cache
+   */
   public Clipboard getClipboard() {
-    return clipboard;
+    return schematicCache.getClipboard(id);
   }
 
   public double getWeight() {
@@ -203,15 +230,25 @@ public class StructureData {
     return dimensionType.matches(world);
   }
 
+  // ✅ Feature 4: ใช้ cached dimensions แทนการเรียก clipboard
   public int getWidth() {
-    return clipboard.getDimensions().x();
+    return width;
   }
 
   public int getLength() {
-    return clipboard.getDimensions().z();
+    return length;
   }
 
   public int getHeight() {
-    return clipboard.getDimensions().y();
+    return height;
+  }
+
+  // ✅ Feature 2: Tag-based loot
+  public Set<String> getTags() {
+    return tags;
+  }
+
+  public String getLootTable() {
+    return lootTable;
   }
 }

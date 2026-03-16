@@ -1,0 +1,37 @@
+# =========================================================
+#  Double Jump Boots - EternalX Custom Item
+# =========================================================
+id: double_jump_boots
+display-name: "&b&lWind Walker Boots"
+base-material: DIAMOND_BOOTS
+custom-model-data: 1011
+rarity: EPIC
+lore:
+  - "&7Enchanted with the power of wind."
+  - ""
+  - "&b&lAbility: Double Jump"
+  - "&7Jump again mid-air!"
+  - "&b&lAbility: Speed Burst"
+  - "&7Gain Speed III on kill for 5s."
+
+enchantments:
+  PROTECTION_ENVIRONMENTAL: 3
+  PROTECTION_FALL: 4
+  DURABILITY: 3
+
+abilities:
+  - type: PASSIVE
+    ability: DOUBLE_JUMP
+    force: 0.8
+    cooldown: 3000
+  - type: ON_KILL
+    ability: SPEED_BURST
+    duration: 100
+    amplifier: 2
+    cooldown: 0
+
+craftable: false
+
+drop:
+  chance: 0.03
+  rarity: EPIC

@@ -1,0 +1,40 @@
+# =========================================================
+#  Vampire Fang Dagger - EternalX Custom Item
+# =========================================================
+id: vampire_dagger
+display-name: "&4Vampire Fang Dagger"
+base-material: IRON_SWORD
+custom-model-data: 1006
+rarity: RARE
+lore:
+  - "&7A dagger coated in vampire venom."
+  - ""
+  - "&4&lAbility: Wither Touch"
+  - "&7Inflicts Wither on enemies."
+  - "&4&lAbility: Bleed"
+  - "&7Enemies bleed over time."
+
+enchantments:
+  DAMAGE_ALL: 3
+
+attributes:
+  attack-damage: 6.0
+  attack-speed: 2.0
+
+abilities:
+  - type: ON_HIT
+    ability: WITHER_TOUCH
+    duration: 100
+    amplifier: 1
+    cooldown: 0
+  - type: ON_HIT
+    ability: BLEED
+    damage_per_tick: 1.0
+    duration: 60
+    cooldown: 5000
+
+craftable: false
+
+drop:
+  chance: 0.04
+  rarity: RARE

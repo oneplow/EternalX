@@ -1,5 +1,5 @@
 name: EternalX
-version: 1.0.0
+version: 1.1.0
 main: com.warakorn.eternalx.EternalX
 api-version: 1.21
 depend: [WorldEdit]
@@ -7,7 +7,7 @@ depend: [WorldEdit]
 commands:
   eternalx:
     description: Main command for EternalX
-    usage: /eternalx <reload|spawn|debug|list>
+    usage: /eternalx <reload|spawn|preview|confirm|cancel|debug|list>
     aliases: [etx, ex]
     permission: eternalx.use
 
@@ -22,10 +22,17 @@ permissions:
     children:
       eternalx.use: true
       eternalx.spawn: true
+      eternalx.preview: true
       eternalx.debug: true
 
   eternalx.spawn:
     description: Spawn structures manually
+    default: op
+    children:
+      eternalx.use: true
+
+  eternalx.preview:
+    description: Preview structures before spawning
     default: op
     children:
       eternalx.use: true

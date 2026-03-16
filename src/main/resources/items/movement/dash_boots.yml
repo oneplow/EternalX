@@ -1,0 +1,30 @@
+# =========================================================
+#  Boots of Hermes - EternalX Custom Item
+# =========================================================
+id: dash_boots
+display-name: "&bBoots of Hermes"
+base-material: LEATHER_BOOTS
+custom-model-data: 1002
+rarity: RARE
+lore:
+  - "&7Boots that let you dash forward."
+  - ""
+  - "&b&lAbility: Dash"
+  - "&7Jump to dash forward and damage enemies. (3s Cooldown)"
+  - "&7Passive: Grants Saturation."
+
+abilities:
+  - type: JUMP
+    ability: DASH
+    force: 1.5
+    damage: 5.0
+    cooldown: 3000
+  - type: PASSIVE
+    ability: SATURATION
+    amplifier: 0
+
+craftable: false
+
+drop:
+  chance: 0.0
+  rarity: RARE

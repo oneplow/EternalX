@@ -87,6 +87,26 @@ public class TreasureData {
       }
     }
 
+    // Add Custom Items from EternalX custom item system
+    try {
+      com.warakorn.eternalx.EternalX eternalPlugin = com.warakorn.eternalx.EternalX.getPlugin(com.warakorn.eternalx.EternalX.class);
+      if (eternalPlugin.getCustomDropManager() != null) {
+        // Determine pseudo-rarity based on Treasure ID
+        com.warakorn.eternalx.modules.items.ItemRarity pseudoRarity = com.warakorn.eternalx.modules.items.ItemRarity.COMMON;
+        if (id.contains("legendary") || id.contains("mythic")) pseudoRarity = com.warakorn.eternalx.modules.items.ItemRarity.LEGENDARY;
+        else if (id.contains("epic") || id.contains("rare")) pseudoRarity = com.warakorn.eternalx.modules.items.ItemRarity.EPIC;
+        else if (id.contains("uncommon")) pseudoRarity = com.warakorn.eternalx.modules.items.ItemRarity.UNCOMMON;
+        
+        // Generate 0-2 custom items based on multiplier
+        int customItemCount = random.nextInt(1 + (int) Math.ceil(multiplier));
+        if (customItemCount > 0) {
+          loot.addAll(eternalPlugin.getCustomDropManager().generateLoot(pseudoRarity, customItemCount));
+        }
+      }
+    } catch (Exception ignored) {
+      // Custom items system might not be loaded yet
+    }
+
     return loot;
   }
 

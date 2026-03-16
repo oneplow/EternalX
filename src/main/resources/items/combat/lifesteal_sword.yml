@@ -1,0 +1,42 @@
+# =========================================================
+#  Lifesteal Sword - EternalX Custom Item
+# =========================================================
+id: lifesteal_sword
+display-name: "&cLifesteal Sword"
+base-material: DIAMOND_SWORD
+custom-model-data: 1001
+rarity: EPIC
+lore:
+  - "&7A sword forged from vampire fangs."
+  - ""
+  - "&c&lAbility: Lifesteal"
+  - "&7Heals you for 15% of damage dealt."
+
+enchantments:
+  DAMAGE_ALL: 5
+  FIRE_ASPECT: 2
+
+attributes:
+  attack-damage: 8.0
+  attack-speed: 1.6
+
+abilities:
+  - type: ON_HIT
+    ability: LIFESTEAL
+    heal_percent: 15.0
+    cooldown: 0
+
+craftable: true
+crafting_recipe:
+  shape:
+    - " R "
+    - "RSR"
+    - " O "
+  ingredients:
+    R: REDSTONE_BLOCK
+    S: NETHER_STAR
+    O: OBSIDIAN
+
+drop:
+  chance: 0.05
+  rarity: EPIC

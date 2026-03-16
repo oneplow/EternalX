@@ -1,0 +1,41 @@
+# =========================================================
+#  Healer's Staff - EternalX Custom Item
+# =========================================================
+id: healer_staff
+display-name: "&a&lHealer's Staff"
+base-material: BLAZE_ROD
+custom-model-data: 1014
+rarity: RARE
+lore:
+  - "&7A staff blessed by the gods of healing."
+  - ""
+  - "&a&lAbility: Heal Aura"
+  - "&7Right-click to heal nearby allies."
+  - "&a&lAbility: Light Orb"
+  - "&7Right-click while sneaking to shoot a light orb."
+
+abilities:
+  - type: RIGHT_CLICK
+    ability: HEAL_AURA
+    radius: 8.0
+    heal_amount: 10.0
+    cooldown: 15000
+  - type: RIGHT_CLICK
+    ability: LIGHT_ORB
+    duration: 200
+    require_sneak: true
+    cooldown: 5000
+
+craftable: true
+crafting_recipe:
+  shape:
+    - " G "
+    - " B "
+    - " B "
+  ingredients:
+    G: GOLD_BLOCK
+    B: BLAZE_ROD
+
+drop:
+  chance: 0.0
+  rarity: RARE

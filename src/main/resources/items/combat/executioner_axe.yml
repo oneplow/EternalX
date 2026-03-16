@@ -1,0 +1,47 @@
+# =========================================================
+#  Executioner's Axe - EternalX Custom Item
+# =========================================================
+id: executioner_axe
+display-name: "&c&lExecutioner's Axe"
+base-material: DIAMOND_AXE
+custom-model-data: 1007
+rarity: EPIC
+lore:
+  - "&7The final judgment."
+  - ""
+  - "&c&lAbility: Execute"
+  - "&7Deals x2 damage to enemies below 30% HP."
+  - "&c&lAbility: Backstab"
+  - "&7Deals x2.5 damage from behind."
+  - "&a&lAbility: Speed Burst"
+  - "&7Gain Speed III on kill for 5s."
+
+enchantments:
+  DAMAGE_ALL: 4
+  DURABILITY: 3
+
+attributes:
+  attack-damage: 9.0
+  attack-speed: 1.0
+
+abilities:
+  - type: ON_HIT
+    ability: EXECUTE
+    threshold: 30.0
+    multiplier: 2.0
+    cooldown: 0
+  - type: ON_HIT
+    ability: BACKSTAB
+    multiplier: 2.5
+    cooldown: 0
+  - type: ON_KILL
+    ability: SPEED_BURST
+    duration: 100
+    amplifier: 2
+    cooldown: 0
+
+craftable: false
+
+drop:
+  chance: 0.03
+  rarity: EPIC

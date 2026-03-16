@@ -1,0 +1,44 @@
+# =========================================================
+#  Guardian's Chestplate - EternalX Custom Item
+# =========================================================
+id: guardian_chestplate
+display-name: "&9&lGuardian's Chestplate"
+base-material: DIAMOND_CHESTPLATE
+custom-model-data: 1008
+rarity: LEGENDARY
+lore:
+  - "&7Forged by ancient guardians of the deep."
+  - ""
+  - "&9&lAbility: Resurrect"
+  - "&7Cheat death once (10 min cooldown)."
+  - "&9&lAbility: Damage Reflect"
+  - "&7Reflect 20% damage back to attackers."
+  - "&9&lAbility: Absorption"
+  - "&7Gain absorption hearts passively."
+
+enchantments:
+  PROTECTION_ENVIRONMENTAL: 4
+  DURABILITY: 3
+  THORNS: 2
+
+attributes:
+  armor: 8.0
+
+abilities:
+  - type: ON_DAMAGE_TAKEN
+    ability: RESURRECT
+    cooldown: 600000
+  - type: ON_DAMAGE_TAKEN
+    ability: DAMAGE_REFLECT
+    percent: 20.0
+    cooldown: 0
+  - type: PASSIVE
+    ability: ABSORPTION
+    amplifier: 1
+    interval: 600
+
+craftable: false
+
+drop:
+  chance: 0.02
+  rarity: LEGENDARY

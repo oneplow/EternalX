@@ -1,0 +1,38 @@
+# =========================================================
+#  Magnet Ring - EternalX Custom Item
+# =========================================================
+id: magnet_ring
+display-name: "&a&lMagnet Ring"
+base-material: GOLD_INGOT
+custom-model-data: 1013
+rarity: UNCOMMON
+lore:
+  - "&7A ring that attracts nearby items and XP."
+  - ""
+  - "&a&lAbility: Magnet"
+  - "&7Passively pulls items and XP to you."
+  - "&a&lAbility: Haste"
+  - "&7Grants Haste II while held."
+
+abilities:
+  - type: PASSIVE
+    ability: MAGNET
+    radius: 10.0
+    cooldown: 0
+  - type: PASSIVE
+    ability: HASTE
+    amplifier: 1
+
+craftable: true
+crafting_recipe:
+  shape:
+    - " I "
+    - "IGI"
+    - " I "
+  ingredients:
+    I: IRON_BLOCK
+    G: GOLD_BLOCK
+
+drop:
+  chance: 0.0
+  rarity: UNCOMMON

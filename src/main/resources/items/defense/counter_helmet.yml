@@ -1,0 +1,38 @@
+# =========================================================
+#  Counter-Strike Helmet - EternalX Custom Item
+# =========================================================
+id: counter_helmet
+display-name: "&d&lCounter-Strike Helmet"
+base-material: NETHERITE_HELMET
+custom-model-data: 1009
+rarity: EPIC
+lore:
+  - "&7A helmet imbued with retaliatory magic."
+  - ""
+  - "&d&lAbility: Counter Strike"
+  - "&720% chance to reflect + halve damage."
+  - "&d&lAbility: Night Vision"
+  - "&7Grants permanent night vision."
+
+enchantments:
+  PROTECTION_ENVIRONMENTAL: 4
+  DURABILITY: 3
+
+attributes:
+  armor: 3.0
+
+abilities:
+  - type: ON_DAMAGE_TAKEN
+    ability: COUNTER_STRIKE
+    chance: 20.0
+    reflect_multiplier: 1.0
+    cooldown: 3000
+  - type: PASSIVE
+    ability: NIGHT_VISION
+    amplifier: 0
+
+craftable: false
+
+drop:
+  chance: 0.03
+  rarity: EPIC

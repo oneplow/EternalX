@@ -1,0 +1,41 @@
+# =========================================================
+#  Grapple Hook - EternalX Custom Item
+# =========================================================
+id: grapple_hook
+display-name: "&a&lGrapple Hook"
+base-material: FISHING_ROD
+custom-model-data: 1010
+rarity: RARE
+lore:
+  - "&7A modified fishing rod with a grappling mechanism."
+  - ""
+  - "&a&lAbility: Grapple"
+  - "&7Right-click to pull yourself to where you look."
+  - "&a&lAbility: Blink"
+  - "&7Sneak + Right-click to teleport forward."
+
+abilities:
+  - type: RIGHT_CLICK
+    ability: GRAPPLE
+    speed: 1.5
+    max_distance: 30.0
+    cooldown: 4000
+  - type: RIGHT_CLICK
+    ability: BLINK
+    distance: 15
+    require_sneak: true
+    cooldown: 8000
+
+craftable: true
+crafting_recipe:
+  shape:
+    - "  I"
+    - " SI"
+    - "S I"
+  ingredients:
+    I: IRON_INGOT
+    S: STRING
+
+drop:
+  chance: 0.0
+  rarity: RARE

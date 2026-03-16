@@ -1,0 +1,49 @@
+# =========================================================
+#  Lightning Trident - EternalX Custom Item
+# =========================================================
+id: lightning_trident
+display-name: "&e&lStormcaller Trident"
+base-material: TRIDENT
+custom-model-data: 1016
+rarity: MYTHIC
+lore:
+  - "&7Forged in the heart of a thunderstorm."
+  - "&7The sky obeys its wielder."
+  - ""
+  - "&e&lAbility: Lightning"
+  - "&7Right-click to call a lightning strike."
+  - "&e&lAbility: Chain Lightning"
+  - "&7Hits chain to 3 nearby enemies."
+  - "&e&lAbility: Ignite"
+  - "&7Sets enemies on fire."
+
+enchantments:
+  DAMAGE_ALL: 5
+  LOYALTY: 3
+  CHANNELING: 1
+  DURABILITY: 3
+
+attributes:
+  attack-damage: 12.0
+  attack-speed: 1.2
+
+abilities:
+  - type: RIGHT_CLICK
+    ability: LIGHTNING
+    cooldown: 10000
+  - type: ON_HIT
+    ability: CHAIN_LIGHTNING
+    targets: 3
+    damage: 6.0
+    radius: 6.0
+    cooldown: 5000
+  - type: ON_HIT
+    ability: IGNITE
+    duration: 100
+    cooldown: 0
+
+craftable: false
+
+drop:
+  chance: 0.01
+  rarity: MYTHIC

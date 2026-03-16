@@ -41,7 +41,9 @@ public class TreasureManager {
       loadTreasure(file);
     }
 
-    plugin.getLogger().info("Loaded " + treasures.size() + " treasure configurations.");
+    org.bukkit.command.ConsoleCommandSender console = plugin.getServer().getConsoleSender();
+    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
+    console.sendMessage(legacy.deserialize("§a[EternalX] Loaded §e" + treasures.size() + " §atreasure configurations."));
   }
 
   /**
@@ -264,6 +266,14 @@ public class TreasureManager {
 
   public TreasureData getTreasure(String id) {
     return treasures.get(id);
+  }
+
+  /**
+   * ✅ Feature 2: ค้นหา treasure ตาม tag
+   * เช่น tag = "dungeon" → หา "tag_dungeon_loot"
+   */
+  public TreasureData getTreasureByTag(String tag) {
+    return treasures.get("tag_" + tag + "_loot");
   }
 
   public Map<String, TreasureData> getTreasures() {

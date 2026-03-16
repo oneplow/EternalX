@@ -1,0 +1,37 @@
+# =========================================================
+#  Mjölnir - EternalX Custom Item
+# =========================================================
+id: mjolnir
+display-name: "&e&lMjölnir"
+base-material: IRON_AXE
+custom-model-data: 1003
+rarity: LEGENDARY
+lore:
+  - "&7The hammer of Thor."
+  - ""
+  - "&e&lAbility: Chain Lightning"
+  - "&7Strikes up to 3 targets with lightning."
+  - "&e&lAbility: Ground Slam"
+  - "&7Right-click to slam the ground."
+
+enchantments:
+  DIG_SPEED: 5
+
+abilities:
+  - type: ON_HIT
+    ability: CHAIN_LIGHTNING
+    targets: 3
+    damage: 8.0
+    radius: 6.0
+  - type: RIGHT_CLICK
+    ability: GROUND_SLAM
+    radius: 5.0
+    damage: 6.0
+    upward_force: 1.2
+    cooldown: 10000
+
+craftable: false
+
+drop:
+  chance: 0.02
+  rarity: LEGENDARY

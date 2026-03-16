@@ -1,0 +1,36 @@
+# =========================================================
+#  Auto-Smelter Pickaxe - EternalX Custom Item
+# =========================================================
+id: miner_pickaxe
+display-name: "&6Auto-Smelter Pickaxe"
+base-material: GOLDEN_PICKAXE
+custom-model-data: 1004
+rarity: UNCOMMON
+lore:
+  - "&7Automatically smelts mined ores."
+  - "&7Goes directly into your inventory."
+
+enchantments:
+  DIG_SPEED: 8
+  DURABILITY: 3
+
+abilities:
+  - type: PASSIVE
+    ability: SMELTING_TOUCH
+  - type: PASSIVE
+    ability: TELEPATHY
+    cooldown: 0
+
+craftable: true
+crafting_recipe:
+  shape:
+    - "GGG"
+    - " S "
+    - " S "
+  ingredients:
+    G: GOLD_BLOCK
+    S: STICK
+
+drop:
+  chance: 0.0
+  rarity: UNCOMMON

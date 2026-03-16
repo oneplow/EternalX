@@ -1,9 +1,6 @@
 package com.warakorn.eternalx.modules.structures;
 
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
-import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
 import com.warakorn.eternalx.EternalX;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -12,32 +9,29 @@ import org.bukkit.block.Biome;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Collections;
 
 public class StructureManager {
   private final EternalX plugin;
   private final List<StructureData> loadedStructures = new ArrayList<>();
+  private final SchematicCache schematicCache; // ✅ Feature 4
 
   public StructureManager(EternalX plugin) {
     this.plugin = plugin;
+    this.schematicCache = new SchematicCache(plugin);
   }
 
   /**
-   * ⭐ โหลดโครงสร้างจาก folder structure แบบใหม่
-   * imports/
-   *   common/     <- StructureRarity.COMMON
-   *   uncommon/   <- StructureRarity.UNCOMMON
-   *   rare/       <- StructureRarity.RARE
-   *   epic/       <- StructureRarity.EPIC
-   *   legendary/  <- StructureRarity.LEGENDARY
-   *   mythic/     <- StructureRarity.MYTHIC
+   * โหลดโครงสร้างจาก folder structure
+   * imports/{rarity}/ → schematic files
+   * structures/{rarity}/ → config files
    */
   public void loadStructures() {
     loadedStructures.clear();
+    schematicCache.clear(); // ✅ Feature 4: เคลียร์ cache เมื่อ reload
+
     File importsDir = plugin.getSettingsManager().getImportsFolder();
     File structuresDir = plugin.getSettingsManager().getStructuresFolder();
 
@@ -56,7 +50,10 @@ public class StructureManager {
       loadStructuresFromRarityFolder(rarityFolder, rarity, structuresDir);
     }
 
-    plugin.getLogger().info("§aLoaded §e" + loadedStructures.size() + " §astructures:");
+    org.bukkit.command.ConsoleCommandSender console = plugin.getServer().getConsoleSender();
+    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
+
+    console.sendMessage(legacy.deserialize("§a[EternalX] Loaded §e" + loadedStructures.size() + " §astructures:"));
     
     // แสดงสถิติตาม rarity
     Map<StructureRarity, Long> countByRarity = loadedStructures.stream()
@@ -65,14 +62,14 @@ public class StructureManager {
     for (StructureRarity rarity : StructureRarity.values()) {
       long count = countByRarity.getOrDefault(rarity, 0L);
       if (count > 0) {
-        plugin.getLogger().info("  " + rarity.getDisplayName() + "§r: §e" + count + " §7structures");
+        console.sendMessage(legacy.deserialize("§7[EternalX]   " + rarity.getDisplayName() + "§r: §e" + count + " §7structures"));
       }
     }
+
+    // ✅ Feature 4: แสดง memory info
+    console.sendMessage(legacy.deserialize("§7[EternalX] Schematic cache: §e" + schematicCache.getRegisteredCount() + " §7registered"));
   }
 
-  /**
-   * โหลดโครงสร้างจาก rarity folder เฉพาะ
-   */
   private void loadStructuresFromRarityFolder(File rarityFolder, StructureRarity rarity, File structuresDir) {
     if (!rarityFolder.exists() || !rarityFolder.isDirectory()) {
       return;
@@ -85,7 +82,7 @@ public class StructureManager {
       return;
     }
 
-    // ⭐ สร้าง rarity folder ใน structures/ ด้วย
+    // สร้าง rarity folder ใน structures/ ด้วย
     File rarityConfigFolder = new File(structuresDir, rarity.name().toLowerCase());
     if (!rarityConfigFolder.exists()) {
       rarityConfigFolder.mkdirs();
@@ -97,7 +94,7 @@ public class StructureManager {
         .replace(".schem", "")
         .replace(".schematic", "");
       
-      // ⭐ Config file อยู่ใน structures/{rarity}/ โดยใช้ชื่อ: structurename.yml
+      // Config file อยู่ใน structures/{rarity}/
       File configFile = new File(rarityConfigFolder, structureName + ".yml");
 
       if (!configFile.exists()) {
@@ -109,9 +106,6 @@ public class StructureManager {
     }
   }
 
-  /**
-   * สร้าง config เริ่มต้นที่เหมาะสมกับ rarity
-   */
   private void createDefaultConfig(File configFile, String schemFileName, StructureRarity rarity) {
     try {
       configFile.createNewFile();
@@ -119,11 +113,8 @@ public class StructureManager {
 
       config.set("file", schemFileName);
       config.set("rarity", rarity.name());
-      
-      // Weight: ยิ่ง rarity สูง ยิ่ง weight น้อย (แต่ระบบจะคูณด้วย rarity.spawnWeight อีกที)
       config.set("weight", 1.0);
       
-      // Spacing: ยิ่ง rarity สูง ยิ่งห่างกัน
       int spacing = switch (rarity) {
         case COMMON -> 15;
         case UNCOMMON -> 20;
@@ -133,7 +124,6 @@ public class StructureManager {
         case MYTHIC -> 80;
       };
       config.set("spacing", spacing);
-      
       config.set("offset-y", 1);
 
       // Rotation
@@ -154,8 +144,12 @@ public class StructureManager {
 
       config.set("ground-blocks", Arrays.asList("GRASS_BLOCK", "DIRT", "PODZOL", "STONE"));
 
-      // ⭐ Treasure: ใช้ชื่อตาม rarity (จะหา common_loot.yml, rare_loot.yml, etc.)
+      // Treasure — rarity-based default
       config.set("treasure-file", rarity.getSuggestedTreasureTier() + "_loot");
+
+      // ✅ Feature 2: Tags + loot-table (ค่า default ว่าง)
+      config.set("tags", Collections.emptyList());
+      config.set("loot-table", "");
 
       config.save(configFile);
     } catch (IOException e) {
@@ -163,23 +157,22 @@ public class StructureManager {
     }
   }
 
-  /**
-   * โหลดโครงสร้างเดี่ยว
-   */
   private void loadSingleStructure(String id, File configFile, File schemFile, StructureRarity rarity) {
     try {
       YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-      String configuredFileName = config.getString("file", schemFile.getName());
       
-      // ใช้ path เต็มของ schemFile แทน
-      File targetSchem = schemFile;
-      if (!targetSchem.exists()) {
+      if (!schemFile.exists()) {
         plugin.getLogger().warning("Missing schematic: " + schemFile.getAbsolutePath());
         return;
       }
 
-      Clipboard clipboard = loadSchematic(targetSchem);
+      // ✅ Feature 4: Lazy loading — โหลด clipboard เพื่ออ่าน dimensions แล้วใส่ cache
+      Clipboard clipboard = schematicCache.loadAndCache(id, schemFile);
       if (clipboard == null) return;
+
+      int width = clipboard.getDimensions().x();
+      int height = clipboard.getDimensions().y();
+      int length = clipboard.getDimensions().z();
 
       // ============ ค่าพื้นฐาน ============
       double weight = config.getDouble("weight", 1.0);
@@ -261,46 +254,42 @@ public class StructureManager {
       // ============ Treasure ============
       String treasureFile = config.getString("treasure-file", null);
 
-      // ⭐ อ่าน rarity จาก config (ถ้ามี) ไม่งั้นใช้จาก folder
+      // Rarity
       StructureRarity finalRarity;
       String rarityStr = config.getString("rarity");
       if (rarityStr != null) {
         try {
           finalRarity = StructureRarity.valueOf(rarityStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-          finalRarity = rarity; // ใช้จาก folder
+          finalRarity = rarity;
         }
       } else {
         finalRarity = rarity;
       }
 
+      // ✅ Feature 2: Tags + loot-table
+      Set<String> tags = new HashSet<>(config.getStringList("tags"));
+      String lootTable = config.getString("loot-table", "");
+
       // ============ สร้าง StructureData ============
       loadedStructures.add(new StructureData(
-        id, clipboard, weight, spacing, offsetY,
+        id, schematicCache, width, height, length,
+        weight, spacing, offsetY,
         allowedBiomes, forbiddenBiomes, ground,
         rotationMode != RotationMode.NONE, pasteAir,
         placementType, dimensionType,
         treasureFile, biomeMatchMode, strictBiomeCheck,
         rotationMode, allowedRotations, enforceHorizontal, enforceVertical,
-        finalRarity
+        finalRarity, tags, lootTable
       ));
 
       plugin.debugLog("Loaded: §e" + id + " " + finalRarity.getDisplayName() +
         " §7[" + placementType + ", " + dimensionType + ", weight=" + 
-        String.format("%.2f", finalRarity.calculateFinalWeight(weight)) + "]");
+        String.format("%.2f", finalRarity.calculateFinalWeight(weight)) + 
+        (tags.isEmpty() ? "" : ", tags=" + tags) + "]");
 
     } catch (Exception e) {
       e.printStackTrace();
-    }
-  }
-
-  private Clipboard loadSchematic(File file) {
-    ClipboardFormat format = ClipboardFormats.findByFile(file);
-    if (format == null) return null;
-    try (ClipboardReader reader = format.getReader(new FileInputStream(file))) {
-      return reader.read();
-    } catch (IOException e) {
-      return null;
     }
   }
 
@@ -313,5 +302,9 @@ public class StructureManager {
       if (data.getId().equalsIgnoreCase(id)) return data;
     }
     return null;
+  }
+
+  public SchematicCache getSchematicCache() {
+    return schematicCache;
   }
 }

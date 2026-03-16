@@ -1,0 +1,41 @@
+# =========================================================
+#  Inferno Blade - EternalX Custom Item
+# =========================================================
+id: inferno_blade
+display-name: "&c&lInferno Blade"
+base-material: NETHERITE_SWORD
+custom-model-data: 1005
+rarity: LEGENDARY
+lore:
+  - "&7A blade forged in the depths of the Nether."
+  - ""
+  - "&c&lAbility: Ignite"
+  - "&7Sets enemies ablaze on hit."
+  - "&c&lAbility: Sweeping Wave"
+  - "&7Right-click to send a wave of fire."
+
+enchantments:
+  DAMAGE_ALL: 5
+  FIRE_ASPECT: 2
+  DURABILITY: 3
+
+attributes:
+  attack-damage: 10.0
+  attack-speed: 1.6
+
+abilities:
+  - type: ON_HIT
+    ability: IGNITE
+    duration: 60
+    cooldown: 0
+  - type: RIGHT_CLICK
+    ability: SWEEPING_WAVE
+    damage: 6.0
+    range: 5.0
+    cooldown: 8000
+
+craftable: false
+
+drop:
+  chance: 0.03
+  rarity: LEGENDARY

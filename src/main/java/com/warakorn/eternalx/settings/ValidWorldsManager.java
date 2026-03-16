@@ -46,12 +46,15 @@ public class ValidWorldsManager implements Listener {
       }
     }
 
-    plugin.getLogger().info("Loaded valid worlds configuration:");
+    org.bukkit.command.ConsoleCommandSender console = plugin.getServer().getConsoleSender();
+    net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer legacy = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection();
+
+    console.sendMessage(legacy.deserialize("§7[EternalX] Loaded valid worlds configuration:"));
 
     for (Map.Entry<String, Boolean> entry : validWorlds.entrySet()) {
       // ✅ Fix #10: ใช้ §a/§c แทน ANSI codes ที่ไม่ทำงานบน MC console
       String status = entry.getValue() ? "§aEnabled" : "§cDisabled";
-      plugin.getLogger().info("  - §e" + entry.getKey() + "§r: " + status);
+      console.sendMessage(legacy.deserialize("§7[EternalX]   - §e" + entry.getKey() + "§r: " + status));
     }
   }
 

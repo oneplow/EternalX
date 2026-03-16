@@ -1,0 +1,39 @@
+# =========================================================
+#  Frost Bow - EternalX Custom Item
+# =========================================================
+id: frost_bow
+display-name: "&b&lFrost Bow"
+base-material: BOW
+custom-model-data: 1015
+rarity: EPIC
+lore:
+  - "&7A bow carved from eternal ice."
+  - ""
+  - "&b&lAbility: Freeze"
+  - "&7Arrows freeze enemies on hit."
+  - "&b&lAbility: Poison Cloud"
+  - "&7Right-click to create a poison cloud."
+
+enchantments:
+  ARROW_DAMAGE: 5
+  ARROW_INFINITE: 1
+  DURABILITY: 3
+
+abilities:
+  - type: ON_HIT
+    ability: FREEZE
+    duration: 80
+    amplifier: 1
+    cooldown: 0
+  - type: RIGHT_CLICK
+    ability: POISON_CLOUD
+    radius: 4.0
+    duration: 100
+    damage: 2.0
+    cooldown: 20000
+
+craftable: false
+
+drop:
+  chance: 0.03
+  rarity: EPIC

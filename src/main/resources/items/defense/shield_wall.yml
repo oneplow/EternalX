@@ -1,0 +1,27 @@
+# =========================================================
+#  Shield Wall Tower Shield - EternalX Custom Item
+# =========================================================
+id: shield_wall
+display-name: "&e&lTower Shield"
+base-material: SHIELD
+custom-model-data: 1012
+rarity: RARE
+lore:
+  - "&7An ancient tower shield from the Bastions."
+  - ""
+  - "&e&lAbility: Shield Wall"
+  - "&7Right-click to create a 3x3 barrier wall."
+
+abilities:
+  - type: RIGHT_CLICK
+    ability: SHIELD_WALL
+    duration: 100
+    width: 3
+    height: 3
+    cooldown: 15000
+
+craftable: false
+
+drop:
+  chance: 0.04
+  rarity: RARE

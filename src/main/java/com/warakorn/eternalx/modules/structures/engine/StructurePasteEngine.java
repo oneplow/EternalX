@@ -188,37 +188,52 @@ public class StructurePasteEngine {
       createSpawner(signData.location, signData.mobName);
     }
 
-    // ⭐ Process Treasures - ใช้ getEffectiveTreasureFile()
+    // ✅ Feature 2: Layered loot resolution — structure → tag → rarity
     if (!chestDataList.isEmpty()) {
-      String treasureFileName = data.getEffectiveTreasureFile();
-      if (treasureFileName != null) {
-        TreasureData treasure = plugin.getTreasureManager().getTreasure(treasureFileName);
-        
-        // ถ้าไม่เจอ treasure ตามชื่อที่ระบุ ลองใช้ชื่อจาก rarity
-        if (treasure == null && data.getTreasureFile() != null) {
-          treasureFileName = data.getRarity().getSuggestedTreasureTier() + "_loot";
-          treasure = plugin.getTreasureManager().getTreasure(treasureFileName);
-        }
-        
-        if (treasure != null) {
-          // ⭐ ใช้ seed ที่รวม rarity เพื่อให้ของหายากได้ของดีกว่า
-          long treasureSeed = world.getSeed() + 
-            centerLoc.getBlockX() * 7919L + 
-            centerLoc.getBlockZ() * 3137L +
-            data.getRarity().ordinal() * 11111L; // เพิ่ม variance ตาม rarity
-          
-          Random random = new Random(treasureSeed);
-          
-          for (ChestData chestData : chestDataList) {
-            fillChest(chestData.location, treasure, random, data.getRarity().getTreasureMultiplier());
+      TreasureData treasure = null;
+      String treasureFileName = null;
+
+      // 1. Per-structure loot-table
+      String lootTable = data.getLootTable();
+      if (lootTable != null && !lootTable.isEmpty()) {
+        treasure = plugin.getTreasureManager().getTreasure(lootTable);
+        treasureFileName = lootTable;
+      }
+
+      // 2. Tag-based loot (ใช้ tag แรกที่เจอ)
+      if (treasure == null && !data.getTags().isEmpty()) {
+        for (String tag : data.getTags()) {
+          treasure = plugin.getTreasureManager().getTreasureByTag(tag);
+          if (treasure != null) {
+            treasureFileName = "tag_" + tag + "_loot";
+            break;
           }
-          
-          plugin.debugLog("Filled " + chestDataList.size() + " containers with treasure: " + 
-            treasureFileName + " (multiplier: " + data.getRarity().getTreasureMultiplier() + "x)");
-        } else {
-          plugin.getLogger().warning("Treasure file not found: " + treasureFileName + 
-            " for structure " + data.getId());
         }
+      }
+
+      // 3. Rarity fallback (วิธีเดิม)
+      if (treasure == null) {
+        treasureFileName = data.getEffectiveTreasureFile();
+        treasure = plugin.getTreasureManager().getTreasure(treasureFileName);
+      }
+
+      if (treasure != null) {
+        long treasureSeed = world.getSeed() + 
+          centerLoc.getBlockX() * 7919L + 
+          centerLoc.getBlockZ() * 3137L +
+          data.getRarity().ordinal() * 11111L;
+        
+        Random random = new Random(treasureSeed);
+        
+        for (ChestData chestData : chestDataList) {
+          fillChest(chestData.location, treasure, random, data.getRarity().getTreasureMultiplier());
+        }
+        
+        plugin.debugLog("Filled " + chestDataList.size() + " containers with treasure: " + 
+          treasureFileName + " (multiplier: " + data.getRarity().getTreasureMultiplier() + "x)");
+      } else {
+        plugin.getLogger().warning("No treasure found for structure " + data.getId() + 
+          " (tried: loot-table, tags" + data.getTags() + ", rarity)");
       }
     }
   }
